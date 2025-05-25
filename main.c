@@ -1,72 +1,105 @@
 /*****************************************************************
 * Programmer: Zachary Marseglia
 * Class: CptS 121, Spring 2024; lab section 4
-* Programming Assignment: PA2
-* January 31, 2024
-* Description:The functions implemented cover a range of 
-applications, including electrical circuit calculations 
-(series and parallel resistances), geometric computations 
-(volume of a pyramid, distance between two points), financial
-calculations (sales tax), character encoding, and a general mathematical equation.
+* Programming Assignment: PA4
+* February 23, 2024
+* Description:This program is the game craps a simple gambling game with dice rolls
+*   where the player can place wagers and attempt to win or lose money.
 *****************************************************************/
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <math.h>
 #include "Header.h"
 
-int main()
-{
-	//Get the values of R and assign them
-	int R1, R2, R3;
-	printf("Enter values for R1, R2, and R3 (separated by spaces): ");
-	scanf("%d %d %d", &R1, &R2, &R3);
+int main() {
 
-	//The code calculates the total series resistance of resistors (R1, R2, R3) using the calculate_series_resistance function and prints the result in the  thousandths place
-	int series_resistance = calculate_series_resistance(R1, R2, R3);
-	printf("Total Series Resistance: %.3f\n", (float)series_resistance);
+    srand(time(NULL));
+    // Seed the random number generator
 
-	//prompts the user to input values for sales tax rate and item cost then stores them as floating points
-	double sales_tax_rate, item_cost;
-	printf("Enter sales tax rate and item cost (separated by spaces): ");
-	scanf("%lf %lf", &sales_tax_rate, &item_cost);
-	//calculates the total sales tax and then prints the results in the thousandths place
-	double total_sales_tax = calculate_total_sales_tax(sales_tax_rate, item_cost);
-	printf("Total Sales Tax: %.3f\n", total_sales_tax);
-	//prompts user to input length width hight and stores them as floating point
-	double l, w, h;
-	printf("Enter length, width, and height of the pyramid base (separated by spaces): ");
-	scanf("%lf %lf %lf", &l, &w, &h);
-	//assigns the volume to the unction then prints
-	double volume_pyramid = calculate_volume_pyramid(l, w, h);
-	printf("Volume of the Pyrimid is: %.3f\n", volume_pyramid);
-    //prompts the user for more R values then stores them as integers 
-	printf("Enter values for R1, R2, and R3 for parallel resistance (separated by spaces): ");
-	scanf("%d %d %d", &R1, &R2, &R3);
-	//assigns the parrrel resistance to the function then prints the results in the thousands  
-	double parallel_resistance = calculate_parallel_resistance(R1, R2, R3);
-	printf("Total Parallel Resistance: %.3f\n", parallel_resistance);
-	//prompts the users to input a plain character text and a shift value the stores them as a character and an integer 
-	char plaintext_character;
-	int shift;
-	printf("Enter plaintext character and shift value (separated by a space): ");
-	scanf(" %c %d", &plaintext_character, &shift);
-	// assigns encoded character to the functionn calculate character encoding and then prints the results
-	char encoded_character = calculate_character_encoding(plaintext_character, shift);
-	printf("Encoded Character: %c\n", encoded_character);
-	//prompts the user for inputs of cordinates then stores them as floating points
-	double x1, y1, x2, y2;
-	printf("Enter coordinates (x1 y1 x2 y2) for two points (separated by spaces): ");
-	scanf("%lf %lf %lf %lf", &x1, &y1, &x2, &y2);
-	// assigns distance to the calculate distance between points function and then prints the results in the thousandths place
-	double distance = calculate_distance_between_points(x1, y1, x2, y2);
-	printf("Distance between two points: %.3f\n", distance);
-	//prompts the user for input values x, y, and z then stores them a floating points
-	double x, y, z;
-	printf("Enter values for x, y, and z in the general equation (separated by spaces): ");
-	scanf("%lf %lf %lf", &x, &y, &z);
-	//assigns result to the evaluate general equation function the prints it in the thousandths place
-	double result = evaluate_general_equation(x, y, z, 10);
-	printf("result of the General eqation: %.3f\n", result);
-	// return
-	return 0;
+
+    print_game_rules();
+    // Display the game rules
+
+    double initial_balance = get_bank_balance();
+    double current_balance = initial_balance;
+    int number_rolls = 0;
+    double new_point_value = 0;
+    int loop = 0;
+    double wager = 0;
+    // Initialize variables for player's balance, rolls, point value, loop control, and wager
+
+    // Main game loop - continues as long as the player has a positive balance
+    while (current_balance > 0) 
+    {
+        do {
+            wager = get_wager_amount();
+            if (!(loop = check_wager_amount(wager, current_balance))) {
+                printf("Invalid wager. Please try again.\n");
+            }
+        }// Get a valid wager from the player
+        while (!loop);
+
+
+        int die1 = roll_die();
+        int die2 = roll_die();
+        int sum_dice = calculate_sum_dice(die1, die2);
+        // Roll two dice and calculate their sum
+
+        printf("You have a %d roll.\n", sum_dice);
+        // Display the result of the dice roll
+
+        if (number_rolls == 0) 
+        {// Check the result based on the number of rolls
+
+            
+            int result = is_win_loss_or_point(sum_dice);
+            // First roll - determine if it's a win, loss, or point
+            if (result == 1) 
+            {
+                printf("Congratulations! You won on the first roll! Lucky is here bet big!\n");
+                current_balance = adjust_bank_balance(current_balance, wager, 1);
+                // Player won on the first roll
+
+            }
+            else if (result == 0) 
+            {
+                printf("Sorry, you lost on the first roll. Remeber you can only lose 100 percent of the money you gamble, but you could potentially win 100 Times your money!\n");
+                current_balance = adjust_bank_balance(current_balance, wager, 0);
+               
+            }
+            else 
+            {
+                new_point_value = sum_dice;
+            }// Player established a point value
+            printf("Your current balance is: %.2lf \n", current_balance);
+        }
+        else {
+            // Subsequent rolls - check if the player made the point or rolled a 7
+            int result = is_point_loss_or_neither(sum_dice, new_point_value);
+
+            if (result == 1) {
+                printf("Congratulations! You made your roll and won!\n");
+            }// Player made the point and won
+            else if (result == 0) {
+                // Player lost by rolling a 7
+                printf("Sorry, you lost. You rolled a 7\n");
+            }
+            // Adjust the player's balance based on the result
+            current_balance = adjust_bank_balance(current_balance, wager, result);
+            printf("Your current balance is: %.2lf \n", current_balance);
+
+        }
+        // Display chatter messages based on the game state
+        chatter_messages(number_rolls, current_balance > initial_balance, initial_balance, current_balance);
+
+        // Increment the number of rolls for each iteration
+        number_rolls++;
+
+    } 
+
+
+    // Display game over message when the player is out of money
+    printf("Game over! You are out of money.\n");
+
+    return 0;
 }
